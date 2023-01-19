@@ -1,11 +1,16 @@
 package com.springdatajpainflearn.repository;
 
+import com.springdatajpainflearn.dto.MemberDto;
 import com.springdatajpainflearn.entity.Member;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,6 +21,8 @@ class MemberRepositoryTest {
 
     @Autowired
     MemberRepository memberRepository;
+    @Autowired
+    EntityManager em;
 
     @Test
     public void testMember() {
@@ -54,6 +61,45 @@ class MemberRepositoryTest {
 
         long deletedCount = memberRepository.count();
         assertThat(deletedCount).isEqualTo(0);
+
+    }
+
+    @Test
+    public void paging() {
+        // Given
+        memberRepository.save(new Member("test1", 10));
+        memberRepository.save(new Member("test2", 10));
+        memberRepository.save(new Member("test3", 10));
+        memberRepository.save(new Member("test4", 10));
+        memberRepository.save(new Member("test5", 10));
+        memberRepository.save(new Member("test6", 10));
+
+        int age = 10;
+        PageRequest pageRequest = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "username"));
+
+        // When
+        Page<Member> page = memberRepository.findByAge(age, pageRequest);
+
+        // Dto로 변환
+        Page<MemberDto> toMap = page.map(member -> new MemberDto(member.getId(), member.getUsername(), null));
+
+        // Then
+    }
+
+    @Test
+    public void queryHint() {
+        // Given
+        Member member1 = memberRepository.save(new Member("member1", 10));
+        em.flush();
+        em.clear();
+
+        // When
+        Member findMember = memberRepository.findById(member1.getId()).get();
+        // findMember.setUsername("member2");
+
+        em.flush();
+
+        // Then
 
     }
 
